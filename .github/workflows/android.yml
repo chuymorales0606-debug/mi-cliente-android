@@ -26,19 +26,11 @@ jobs:
 
     - name: Build OTClient for Android
       run: |
-        cd android
-        chmod +x build.sh || true
-        # Si tiene un script propio de compilación o CMake, lo ejecutamos
-        if [ -f "build.sh" ]; then
-          ./build.sh
-        else
-          echo "Buscando configuración de CMake..."
-          mkdir -p build && cd build
-          cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
-                -DANDROID_ABI=armeabi-v7a \
-                -DANDROID_PLATFORM=android-21 ..
-          make -j$(nproc)
-        fi
+        mkdir -p build && cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+              -DANDROID_ABI=armeabi-v7a \
+              -DANDROID_PLATFORM=android-21 ..
+        make -j$(nproc)
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
