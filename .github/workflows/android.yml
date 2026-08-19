@@ -8,35 +8,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+    container:
+      image: cirrusci/android-sdk:34
 
     steps:
-    - name: Clone repository
-      run: |
-        git clone https://github.com/${{ github.repository }}.git .
-        git checkout main
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Set up Java 17
+    - name: Build APK with Gradle
       run: |
-        sudo apt-get update
-        sudo apt-get install -y openjdk-17-jdk wget unzip
-        echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
-
-    - name: Install Android SDK & Build APK
-      run: |
-        export ANDROID_HOME=$HOME/android-sdk
-        mkdir -p $ANDROID_HOME/cmdline-tools
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools/
-        mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-        
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-        
-        yes | sdkmanager --licenses || true
-        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-        
-        # Como los archivos ya están en la raíz, solo entramos a la carpeta android
         cd android
         chmod +x gradlew
         ./gradlew assembleRelease
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: android/app/build/outputs/apk/release/app-release.apk
