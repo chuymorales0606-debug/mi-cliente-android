@@ -22,9 +22,21 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Build APK with Gradle
+    - name: Find and Build APK with Gradle
       run: |
-        cd android
+        # Busca dónde está el archivo gradlew en el proyecto
+        GRADLEW_PATH=$(find . -name "gradlew" -type f -print -quit)
+        
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "¡No se encontró el archivo gradlew en ningún lado!"
+          exit 1
+        fi
+        
+        # Obtiene la carpeta donde está el gradlew
+        GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
+        echo "¡Encontrado en la carpeta: $GRADLEW_DIR!"
+        
+        cd "$GRADLEW_DIR"
         chmod +x gradlew
         ./gradlew assembleRelease --no-daemon
 
@@ -32,4 +44,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: android/app/build/outputs/apk/release/app-release.apk
+        path: '**/build/outputs/apk/release/*.apk'
