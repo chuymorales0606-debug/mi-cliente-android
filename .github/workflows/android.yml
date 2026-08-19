@@ -19,29 +19,29 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Android SDK
+    - name: Setup Android SDK and NDK
       uses: android-actions/setup-android@v3
+      with:
+        ndk-version: '25.2.9519653'
 
-    - name: Find and Build APK with Gradle
+    - name: Build OTClient for Android
       run: |
-        # Busca dónde está el archivo gradlew en el proyecto
-        GRADLEW_PATH=$(find . -name "gradlew" -type f -print -quit)
-        
-        if [ -z "$GRADLEW_PATH" ]; then
-          echo "¡No se encontró el archivo gradlew en ningún lado!"
-          exit 1
+        cd android
+        chmod +x build.sh || true
+        # Si tiene un script propio de compilación o CMake, lo ejecutamos
+        if [ -f "build.sh" ]; then
+          ./build.sh
+        else
+          echo "Buscando configuración de CMake..."
+          mkdir -p build && cd build
+          cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+                -DANDROID_ABI=armeabi-v7a \
+                -DANDROID_PLATFORM=android-21 ..
+          make -j$(nproc)
         fi
-        
-        # Obtiene la carpeta donde está el gradlew
-        GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
-        echo "¡Encontrado en la carpeta: $GRADLEW_DIR!"
-        
-        cd "$GRADLEW_DIR"
-        chmod +x gradlew
-        ./gradlew assembleRelease --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: '**/build/outputs/apk/release/*.apk'
+        path: '**/*.apk'
