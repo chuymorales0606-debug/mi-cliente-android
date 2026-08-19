@@ -24,6 +24,11 @@ jobs:
       with:
         ndk-version: '25.2.9519653'
 
+    - name: Install Dependencies via vcpkg / apt
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libboost-all-dev libzip-dev libbz2-dev
+
     - name: Build OTClient for Android
       run: |
         mkdir -p build && cd build
