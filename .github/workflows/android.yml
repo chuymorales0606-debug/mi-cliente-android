@@ -24,23 +24,13 @@ jobs:
       with:
         ndk-version: '25.2.9519653'
 
-    - name: Set up vcpkg and install dependencies
-      run: |
-        git clone https://github.com/microsoft/vcpkg.git
-        ./vcpkg/bootstrap-vcpkg.sh
-        # Le pasamos la ruta del NDK para que vcpkg detecte el compilador sin errores
-        export VCPKG_FORCE_SYSTEM_BINARIES=1
-        ./vcpkg/vcpkg install boost-system boost-asio boost-config libzip bzip2 --triplet=arm-android \
-          --overlay-toolchains=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake
-
     - name: Build OTClient for Android
       run: |
         mkdir -p build && cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
-              -DCMAKE_TOOLCHAIN_FILE_VCPKG=$GITHUB_WORKSPACE/vcpkg/scripts/buildsystems/vcpkg.cmake \
               -DANDROID_ABI=armeabi-v7a \
               -DANDROID_PLATFORM=android-21 \
-              -DVCPKG_TARGET_TRIPLET=arm-android ..
+              -DENABLE_ENCRYPTION=ON ..
         make -j$(nproc)
 
     - name: Upload APK Artifact
