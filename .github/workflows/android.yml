@@ -9,11 +9,32 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: cirrusci/android-sdk:34
+      image: openjdk:17-jdk-slim
 
     steps:
+    - name: Install Git & Dependencies
+      run: |
+        apt-get update && apt-get install -y git wget unzip
+
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Download and Setup Android Command Line Tools
+      run: |
+        export ANDROID_HOME=/opt/android-sdk
+        mkdir -p $ANDROID_HOME/cmdline-tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+        unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools/
+        mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+        
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+        
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
 
     - name: Build APK with Gradle
       run: |
