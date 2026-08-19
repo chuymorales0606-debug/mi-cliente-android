@@ -24,10 +24,14 @@ jobs:
       with:
         ndk-version: '25.2.9519653'
 
-    - name: Install Build Dependencies
+    - name: Download Boost and Dependencies Headers
       run: |
         sudo apt-get update
-        sudo apt-get install -y libboost-dev libzip-dev libbz2-dev
+        sudo apt-get install -y libzip-dev libbz2-dev
+        # Descargamos los headers de Boost para que el cliente los encuentre sin depender de vcpkg
+        wget -q https://archives.boost.io/release/1.82.0/source/boost_1_82_0.tar.gz
+        tar -xzf boost_1_82_0.tar.gz
+        mv boost_1_82_0/boost ./boost_headers
 
     - name: Build OTClient for Android
       run: |
@@ -35,7 +39,7 @@ jobs:
         cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
               -DANDROID_ABI=armeabi-v7a \
               -DANDROID_PLATFORM=android-21 \
-              -DBOOST_INCLUDEDIR=/usr/include \
+              -DBOOST_ROOT=$GITHUB_WORKSPACE/boost_headers \
               -DENABLE_ENCRYPTION=ON ..
         make -j$(nproc)
 
